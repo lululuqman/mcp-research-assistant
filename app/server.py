@@ -1,54 +1,59 @@
-from fastapi import FastAPI
-from openai_mcp import MCPServer
+from fastapi import FastAPI, Query
+from duckduckgo_search import DDGS
 import requests
-from bs4 import BeautifulSoup
+from supabase import create_client, Client
+from dotenv import load_dotenv
+import os
 
-app = FastAPI()
-mcp = MCPServer(app, name="research_mcp")
+# 🔑 Load environment variables
+load_dotenv()
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# 🦆 DuckDuckGo Search Tool
-@mcp.tool()
-def search_web(query: str):
-    """Search the web using DuckDuckGo and return top 5 results."""
-    url = f"https://api.duckduckgo.com/?q={query}&format=json&no_redirect=1&no_html=1"
-    res = requests.get(url)
-    if res.status_code != 200:
-        return {"error": f"DuckDuckGo request failed ({res.status_code})"}
-    data = res.json()
-    related = data.get("RelatedTopics", [])
-    results = []
-    for r in related:
-        if "Text" in r and "FirstURL" in r:
-            results.append({
-                "title": r["Text"],
-                "link": r["FirstURL"]
-            })
-    return results[:5] or {"message": "No results found."}
+app = FastAPI(title="MCP Research Assistant")
 
+# 🧭 DuckDuckGo Search Endpoint
+@app.get("/tools/search_web")
+def search_web(query: str = Query(...)):
+    try:
+        results = []
+        with DDGS() as ddgs:
+            for r in ddgs.text(query, max_results=5):
+                results.append({
+                    "title": r.get("title"),
+                    "url": r.get("href"),
+                    "snippet": r.get("body")
+                })
 
-# 🧠 arXiv Research Tool
-@mcp.tool()
-def search_arxiv(query: str):
-    """Search arXiv for research papers."""
-    url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=5"
-    res = requests.get(url)
-    if res.status_code != 200:
-        return {"error": f"arXiv request failed ({res.status_code})"}
+        # 🧾 Save query to Supabase
+        if results:
+            supabase.table("search_history").insert({
+                "query": query,
+                "source": "duckduckgo",
+                "result_summary": results[0]["title"] if results else "No result"
+            }).execute()
 
-    soup = BeautifulSoup(res.text, "xml")
-    entries = soup.find_all("entry")
+        return {"results": results}
+    except Exception as e:
+        return {"error": str(e)}
 
-    results = []
-    for e in entries:
-        results.append({
-            "title": e.title.text.strip(),
-            "summary": e.summary.text.strip()[:300] + "...",
-            "link": e.id.text.strip(),
-            "published": e.published.text.strip()
-        })
-    return results or {"message": "No papers found."}
-
+# 📚 Arxiv Search Endpoint
+@app.get("/tools/search_arxiv")
+def search_arxiv(query: str = Query(...)):
+    try:
+        url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=5"
+        response = requests.get(url)
+        response.raise_for_status()
+        supabase.table("search_history").insert({
+            "query": query,
+            "source": "arxiv",
+            "result_summary": "Fetched results"
+        }).execute()
+        return {"results": response.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/")
 def root():
-    return {"message": "MCP Research Assistant (DuckDuckGo + arXiv) is running!"}
+    return {"message": "🚀 MCP Research Assistant with Supabase connected!"}

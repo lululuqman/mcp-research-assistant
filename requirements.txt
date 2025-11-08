@@ -1,5 +1,7 @@
 fastapi
 uvicorn
-openai-mcp
 requests
 beautifulsoup4
+duckduckgo-search
+supabase
+python-dotenv
