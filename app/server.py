@@ -1,59 +1,63 @@
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from duckduckgo_search import DDGS
+import arxiv
 import requests
-from supabase import create_client, Client
-from dotenv import load_dotenv
-import os
-
-# 🔑 Load environment variables
-load_dotenv()
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI(title="MCP Research Assistant")
 
-# 🧭 DuckDuckGo Search Endpoint
+# --- Allow React frontend requests ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # in production, set to your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Root route ---
+@app.get("/")
+def read_root():
+    return {"message": "MCP Research Assistant is running 🚀"}
+
+
+# --- DuckDuckGo Search Tool ---
 @app.get("/tools/search_web")
-def search_web(query: str = Query(...)):
+def search_web(query: str = Query(..., description="Search query")):
     try:
         results = []
         with DDGS() as ddgs:
             for r in ddgs.text(query, max_results=5):
                 results.append({
                     "title": r.get("title"),
-                    "url": r.get("href"),
+                    "link": r.get("href"),
                     "snippet": r.get("body")
                 })
-
-        # 🧾 Save query to Supabase
-        if results:
-            supabase.table("search_history").insert({
-                "query": query,
-                "source": "duckduckgo",
-                "result_summary": results[0]["title"] if results else "No result"
-            }).execute()
-
         return {"results": results}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"DuckDuckGo request failed: {str(e)}"}
 
-# 📚 Arxiv Search Endpoint
+
+# --- ArXiv Search Tool ---
 @app.get("/tools/search_arxiv")
-def search_arxiv(query: str = Query(...)):
+def search_arxiv(query: str = Query(..., description="ArXiv search query")):
     try:
-        url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=5"
-        response = requests.get(url)
-        response.raise_for_status()
-        supabase.table("search_history").insert({
-            "query": query,
-            "source": "arxiv",
-            "result_summary": "Fetched results"
-        }).execute()
-        return {"results": response.text}
+        search = arxiv.Search(query=query, max_results=5, sort_by=arxiv.SortCriterion.Relevance)
+        results = []
+        for result in search.results():
+            results.append({
+                "title": result.title,
+                "summary": result.summary,
+                "authors": [a.name for a in result.authors],
+                "pdf_url": result.pdf_url,
+                "published": result.published.strftime("%Y-%m-%d")
+            })
+        return {"results": results}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"ArXiv request failed: {str(e)}"}
 
-@app.get("/")
-def root():
-    return {"message": "🚀 MCP Research Assistant with Supabase connected!"}
+
+# --- Simple health check route ---
+@app.get("/health")
+def health():
+    return {"status": "ok"}
