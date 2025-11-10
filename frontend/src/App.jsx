@@ -3,18 +3,18 @@ import "./App.css";
 
 function App() {
   const [query, setQuery] = useState("");
-  const [source, setSource] = useState("DuckDuckGo");
+  const [source, setSource] = useState("Tavily");
   const [results, setResults] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const suggestions = [
-    "AI",
+    "AI Ethics",
     "Quantum Computing",
     "Climate Change",
-    "React",
-    "GPT",
-    "Blockchain",
+    "React Performance",
+    "GPT Models",
+    "Blockchain Security",
     "Robotics",
   ];
 
@@ -26,7 +26,7 @@ function App() {
 
     try {
       const endpoint =
-        source === "DuckDuckGo"
+        source === "Tavily"
           ? `http://localhost:8000/tools/search_web?query=${encodeURIComponent(query)}`
           : `http://localhost:8000/tools/search_arxiv?query=${encodeURIComponent(query)}`;
 
@@ -51,23 +51,22 @@ function App() {
 
   return (
     <div className="app">
-      {/* Header section always visible */}
+      {/* Header always visible */}
       <header className="header">
         <h1>MCP Research Assistant 🔍</h1>
-        <p className="subtitle">Search research papers or the web easily</p>
+        <p className="subtitle">Search academic papers or the web intelligently</p>
       </header>
 
-      {/* Search bar stays fixed */}
+      {/* Search Bar */}
       <div className="search-container">
         <input
           type="text"
           value={query}
-          placeholder="Search for AI, Quantum Computing, etc..."
+          placeholder="Search for topics (AI, Quantum, GPT...)"
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           list="suggestions"
         />
-
         <datalist id="suggestions">
           {suggestions.map((s, i) => (
             <option key={i} value={s} />
@@ -75,8 +74,8 @@ function App() {
         </datalist>
 
         <select value={source} onChange={(e) => setSource(e.target.value)}>
-          <option value="DuckDuckGo">DuckDuckGo</option>
-          <option value="ArXiv">ArXiv</option>
+          <option value="Tavily">Tavily (Web)</option>
+          <option value="arXiv">arXiv (Papers)</option>
         </select>
 
         <button onClick={handleSearch} disabled={loading}>
@@ -84,7 +83,7 @@ function App() {
         </button>
       </div>
 
-      {/* Results section below */}
+      {/* Results */}
       <main className="results-section">
         {error && <p className="error">{error}</p>}
 
@@ -94,12 +93,25 @@ function App() {
 
         {results.map((item, index) => (
           <div className="result-card" key={index}>
-            <a href={item.url || item.link} target="_blank" rel="noopener noreferrer">
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="result-title"
+            >
               {item.title}
             </a>
-            {item.authors && <p className="authors">👤 {item.authors.join(", ")}</p>}
-            {item.summary && <p>{item.summary}</p>}
-            {item.date && <p className="published">📅 {item.date}</p>}
+
+            {/* Show citation for arXiv results */}
+            {item.citation ? (
+              <p className="citation">📚 {item.citation}</p>
+            ) : (
+              <p className="source">
+                🌐 Source: {item.source || "Unknown"}
+              </p>
+            )}
+
+            {item.summary && <p className="summary">{item.summary}</p>}
           </div>
         ))}
       </main>

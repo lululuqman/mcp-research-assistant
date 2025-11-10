@@ -1,63 +1,104 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from duckduckgo_search import DDGS
-import arxiv
 import requests
+import feedparser
+import os
+from dotenv import load_dotenv
 
-app = FastAPI(title="MCP Research Assistant")
+# ✅ Load .env variables
+load_dotenv()
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
-# --- Allow React frontend requests ---
+# ✅ Initialize FastAPI app
+app = FastAPI()
+
+# ✅ CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # in production, set to your frontend domain
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Root route ---
-@app.get("/")
-def read_root():
-    return {"message": "MCP Research Assistant is running 🚀"}
-
-
-# --- DuckDuckGo Search Tool ---
+# ================================
+# 🔍 Tavily Search Endpoint
+# ================================
 @app.get("/tools/search_web")
-def search_web(query: str = Query(..., description="Search query")):
+async def search_web(query: str):
+    """
+    Tavily Web Search (replaces DuckDuckGo)
+    """
     try:
-        results = []
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=5):
-                results.append({
-                    "title": r.get("title"),
-                    "link": r.get("href"),
-                    "snippet": r.get("body")
-                })
-        return {"results": results}
-    except Exception as e:
-        return {"error": f"DuckDuckGo request failed: {str(e)}"}
+        if not TAVILY_API_KEY:
+            return {"error": "TAVILY_API_KEY is missing in .env"}
 
+        response = requests.post(
+            "https://api.tavily.com/search",
+            headers={"Content-Type": "application/json"},
+            json={
+                "api_key": TAVILY_API_KEY,
+                "query": query,
+                "max_results": 10,
+                "include_answer": False,
+                "include_domains": [],
+                "search_depth": "basic",
+                "include_images": False,
+            },
+            timeout=10,
+        )
 
-# --- ArXiv Search Tool ---
-@app.get("/tools/search_arxiv")
-def search_arxiv(query: str = Query(..., description="ArXiv search query")):
-    try:
-        search = arxiv.Search(query=query, max_results=5, sort_by=arxiv.SortCriterion.Relevance)
+        if response.status_code != 200:
+            return {"error": f"Tavily API error ({response.status_code})"}
+
+        data = response.json()
         results = []
-        for result in search.results():
+
+        for item in data.get("results", []):
             results.append({
-                "title": result.title,
-                "summary": result.summary,
-                "authors": [a.name for a in result.authors],
-                "pdf_url": result.pdf_url,
-                "published": result.published.strftime("%Y-%m-%d")
+                "title": item.get("title", "Untitled"),
+                "summary": item.get("content", "No summary available."),
+                "url": item.get("url", "#"),
+                "source": item.get("url", "Tavily").split("/")[2],
             })
+
         return {"results": results}
+
     except Exception as e:
-        return {"error": f"ArXiv request failed: {str(e)}"}
+        return {"error": str(e)}
 
 
-# --- Simple health check route ---
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+# ================================
+# 📚 arXiv Research Search
+# ================================
+@app.get("/tools/search_arxiv")
+async def search_arxiv(query: str):
+    """
+    arXiv Research Paper Search
+    """
+    try:
+        url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results=10"
+        feed = feedparser.parse(url)
+
+        results = []
+        for entry in feed.entries:
+            title = entry.title
+            summary = entry.summary
+            paper_url = entry.link
+            published = getattr(entry, "published", "Unknown Date")
+            authors = [a.name for a in getattr(entry, "authors", [])]
+
+            citation = f"{', '.join(authors) if authors else 'Unknown Author'} ({published.split('T')[0]})."
+            results.append({
+                "title": title,
+                "summary": summary,
+                "url": paper_url,
+                "citation": citation,
+                "source": "arXiv",
+                "date": published,
+                "authors": authors,
+            })
+
+        return {"results": results}
+
+    except Exception as e:
+        return {"error": str(e)}
