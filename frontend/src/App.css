@@ -1,202 +1,192 @@
-* {
+/* Layout + header */
+body {
+  background: #0f1114;
+  color: #e6eef6;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-  background: #0e1117;
-  color: #f4f4f4;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem;
-}
-
-/* === APP CONTAINER === */
 .app {
-  width: 100%;
-  max-width: 960px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+  max-width: 980px;
+  margin: 28px auto;
+  padding: 20px;
 }
 
-/* === HEADER === */
 .header {
   text-align: center;
+  margin-bottom: 18px;
 }
-
 .header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #58a6ff;
-  margin-bottom: 0.3rem;
+  color: #5fb0ff;
+  margin: 0;
+  font-size: 28px;
+}
+.header .subtitle {
+  margin: 6px 0 0;
+  color: #9fb7d6;
+  font-size: 14px;
 }
 
-.subtitle {
-  font-size: 1rem;
-  color: #c9d1d9;
-  opacity: 0.85;
-}
-
-/* === SEARCH SECTION === */
+/* Search */
 .search-container {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-  background: #161b22;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  width: 100%;
-  max-width: 900px;
+  gap: 10px;
+  margin: 18px 0 24px;
+  align-items: center;
 }
-
+.search-container input[type="text"],
 .search-container input {
-  flex: 1 1 300px;
-  padding: 0.7rem 1rem;
-  border: 1px solid #30363d;
-  border-radius: 8px;
-  background-color: #0d1117;
-  color: #f0f6fc;
-  font-size: 1rem;
-  outline: none;
-  transition: border 0.2s;
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #23313a;
+  background: #0b0d0f;
+  color: #e6eef6;
+  font-size: 15px;
 }
-
-.search-container input:focus {
-  border-color: #58a6ff;
-}
-
 .search-container select {
-  flex: 0 0 150px;
-  padding: 0.7rem;
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid #30363d;
-  background: #0d1117;
-  color: #f0f6fc;
-  cursor: pointer;
-  transition: border 0.2s;
+  background: #0b0d0f;
+  color: #e6eef6;
+  border: 1px solid #23313a;
 }
-
-.search-container select:hover {
-  border-color: #58a6ff;
-}
-
 .search-container button {
-  flex: 0 0 120px;
-  padding: 0.7rem 1rem;
+  background: #2ea043;
+  color: white;
+  padding: 10px 16px;
   border: none;
-  border-radius: 8px;
-  background-color: #238636;
-  color: #fff;
-  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  font-weight: 600;
 }
 
-.search-container button:hover {
-  background-color: #2ea043;
-  transform: scale(1.03);
-}
-
-.search-container button:disabled {
-  background-color: #2d333b;
-  cursor: not-allowed;
-}
-
-/* === RESULTS === */
-.results-section {
-  width: 100%;
+/* Results */
+.results {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 18px;
 }
 
+/* Card */
 .result-card {
-  background: #161b22;
-  padding: 1.2rem 1.4rem;
+  background: linear-gradient(180deg, rgba(20,20,22,0.8), rgba(12,12,14,0.8));
   border-radius: 12px;
-  border: 1px solid #30363d;
-  transition: background 0.3s;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
 }
-
-.result-card:hover {
-  background: #1c2128;
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
-
 .result-title {
-  color: #58a6ff;
-  font-size: 1.15rem;
-  font-weight: 600;
+  color: #7ec6ff;
+  font-size: 18px;
+  font-weight: 700;
   text-decoration: none;
 }
-
-.result-title:hover {
-  text-decoration: underline;
+.result-meta {
+  text-align: right;
+  min-width: 120px;
+}
+.result-meta .source {
+  display: block;
+  color: #9fb7d6;
+  font-size: 13px;
+}
+.result-meta .date {
+  display: block;
+  color: #7a97b2;
+  font-size: 12px;
+  margin-top: 6px;
 }
 
-.citation,
-.source {
-  font-size: 0.9rem;
-  color: #8b949e;
-  margin-top: 0.3rem;
+.result-body {
+  margin-top: 12px;
 }
-
 .summary {
-  color: #c9d1d9;
-  font-size: 0.95rem;
-  margin-top: 0.6rem;
-  line-height: 1.5;
+  color: #dfeefb;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
-
-/* === STATUS / ERROR === */
-.error {
-  text-align: center;
-  color: #f85149;
+.read-more {
+  margin-top: 8px;
+  background: transparent;
+  border: 0;
+  color: #8bbdff;
+  cursor: pointer;
   font-weight: 600;
 }
 
-.no-results {
+/* Chat UI inside card */
+.card-chat {
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.03);
+  padding-top: 12px;
+}
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.chat-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: #0b0d0f;
+  color: #e6eef6;
+}
+.chat-input-row button {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+/* chat messages */
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-message .bubble {
+  display: inline-block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  max-width: 86%;
+  font-size: 14px;
+}
+.chat-message.user .bubble {
+  background: rgba(255,255,255,0.04);
+  color: #dbeefb;
+  align-self: flex-end;
+}
+.chat-message.ai .bubble {
+  background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
+  color: #daf0ff;
+  border: 1px solid rgba(59,130,246,0.12);
+  align-self: flex-start;
+}
+
+/* Loading / error messages */
+.loading {
+  color: #f7c259;
+  margin-bottom: 12px;
   text-align: center;
-  color: #8b949e;
 }
-
-/* === RESPONSIVE DESIGN === */
-@media (max-width: 768px) {
-  body {
-    padding: 1rem;
-  }
-
-  .search-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-container input,
-  .search-container select,
-  .search-container button {
-    width: 100%;
-  }
-
-  .header h1 {
-    font-size: 1.6rem;
-  }
+.error {
+  color: #ff7b7b;
+  margin-bottom: 12px;
+  text-align: center;
 }
-
-@media (max-width: 480px) {
-  .header h1 {
-    font-size: 1.4rem;
-  }
-  .subtitle {
-    font-size: 0.9rem;
-  }
-  .result-title {
-    font-size: 1rem;
-  }
+.no-results {
+  color: #9fb7d6;
+  text-align: center;
 }
